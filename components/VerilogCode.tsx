@@ -1,12 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { CopyIcon, CheckIcon } from './Icons';
+import { CopyIcon, CheckIcon } from './Icons.jsx';
 
-interface VerilogCodeProps {
-  simplifiedTerms: string[][];
-  variables: string[];
-}
-
-const generateVerilog = (simplifiedTerms: string[][], variables: string[]): string => {
+const generateVerilog = (simplifiedTerms, variables) => {
   const moduleName = "logic_circuit";
   const inputs = variables.join(', ');
   
@@ -66,7 +61,7 @@ endmodule
   return verilogCode.trim();
 };
 
-export const VerilogCode: React.FC<VerilogCodeProps> = ({ simplifiedTerms, variables }) => {
+export const VerilogCode = ({ simplifiedTerms, variables }) => {
   const [copied, setCopied] = useState(false);
   const verilogCode = useMemo(() => generateVerilog(simplifiedTerms, variables), [simplifiedTerms, variables]);
 

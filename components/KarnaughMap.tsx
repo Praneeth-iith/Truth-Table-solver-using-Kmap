@@ -1,11 +1,6 @@
 import React from 'react';
 
-interface KarnaughMapProps {
-  variables: string[];
-  minterms: number[];
-}
-
-export const KarnaughMap: React.FC<KarnaughMapProps> = ({ variables, minterms }) => {
+export const KarnaughMap = ({ variables, minterms }) => {
   const varCount = variables.length;
 
   if (varCount < 2 || varCount > 4) {
@@ -16,7 +11,7 @@ export const KarnaughMap: React.FC<KarnaughMapProps> = ({ variables, minterms })
     );
   }
 
-  const grayCode = (n: number): string[] => {
+  const grayCode = (n) => {
     if (n === 1) return ['0', '1'];
     const prev = grayCode(n - 1);
     return [...prev.map(c => '0' + c), ...[...prev].reverse().map(c => '1' + c)];

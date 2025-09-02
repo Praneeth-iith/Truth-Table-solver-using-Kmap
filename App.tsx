@@ -1,22 +1,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { TruthTable } from './components/TruthTable';
-import { KarnaughMap } from './components/KarnaughMap';
-import { VerilogCode } from './components/VerilogCode';
-import { CircuitDiagram } from './components/CircuitDiagram';
-import { SimplifiedExpression } from './components/SimplifiedExpression';
-import { TableIcon, MapIcon, CodeIcon, CircuitIcon } from './components/Icons';
-import type { ProcessedResult } from './types';
-import { solveFromOutputs } from './logic/parser';
+import { TruthTable } from './components/TruthTable.jsx';
+import { KarnaughMap } from './components/KarnaughMap.jsx';
+import { VerilogCode } from './components/VerilogCode.jsx';
+import { VerilogTestbench } from './components/VerilogTestbench.jsx';
+import { CircuitDiagram } from './components/CircuitDiagram.jsx';
+import { SimplifiedExpression } from './components/SimplifiedExpression.jsx';
+import { TableIcon, MapIcon, CodeIcon, CircuitIcon, TestbenchIcon } from './components/Icons.jsx';
+import { solveFromOutputs } from './logic/parser.js';
 
-type Tab = 'kmap' | 'verilog' | 'circuit';
-
-const App: React.FC = () => {
+const App = () => {
   const [numVariables, setNumVariables] = useState(3);
-  const [outputs, setOutputs] = useState<(0 | 1)[]>(Array(2**3).fill(0));
-  const [result, setResult] = useState<ProcessedResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [outputs, setOutputs] = useState(Array(2**3).fill(0));
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('kmap');
+  const [activeTab, setActiveTab] = useState('kmap');
 
   useEffect(() => {
     const newSize = 2 ** numVariables;
@@ -25,7 +23,7 @@ const App: React.FC = () => {
     setError(null);
   }, [numVariables]);
   
-  const handleOutputChange = (index: number, value: 0 | 1) => {
+  const handleOutputChange = (index, value) => {
     const newOutputs = [...outputs];
     newOutputs[index] = value;
     setOutputs(newOutputs);
@@ -42,7 +40,7 @@ const App: React.FC = () => {
         const processedResult = solveFromOutputs(numVariables, outputs);
         setResult(processedResult);
         setActiveTab('kmap');
-      } catch (e: any) {
+      } catch (e) {
         setError(e.message || 'An unexpected error occurred during processing.');
       } finally {
         setIsLoading(false);
@@ -71,8 +69,10 @@ const App: React.FC = () => {
         return <KarnaughMap variables={result.variables} minterms={result.minterms} />;
       case 'verilog':
         return <VerilogCode simplifiedTerms={result.simplifiedExpressionTerms} variables={result.variables} />;
+      case 'testbench':
+        return <VerilogTestbench variables={result.variables} />;
       case 'circuit':
-        return <CircuitDiagram expression={result.simplifiedExpression} variables={result.variables} />;
+        return <CircuitDiagram simplifiedExpressionTerms={result.simplifiedExpressionTerms} variables={result.variables} />;
       default:
         return null;
     }
@@ -127,6 +127,7 @@ const App: React.FC = () => {
                         <nav className="flex -mb-px">
                             <TabButton icon={<MapIcon />} label="K-Map" isActive={activeTab === 'kmap'} onClick={() => setActiveTab('kmap')} />
                             <TabButton icon={<CodeIcon />} label="Verilog" isActive={activeTab === 'verilog'} onClick={() => setActiveTab('verilog')} />
+                            <TabButton icon={<TestbenchIcon />} label="Testbench" isActive={activeTab === 'testbench'} onClick={() => setActiveTab('testbench')} />
                             <TabButton icon={<CircuitIcon />} label="Circuit" isActive={activeTab === 'circuit'} onClick={() => setActiveTab('circuit')} />
                         </nav>
                     </div>
@@ -142,16 +143,7 @@ const App: React.FC = () => {
   );
 };
 
-interface TabButtonProps {
-    // FIX: Specify that the icon prop is a React element that accepts a `className` prop.
-    // This provides more specific type information to `React.cloneElement` and resolves the TypeScript error.
-    icon: React.ReactElement<{ className?: string }>;
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-}
-
-const TabButton: React.FC<TabButtonProps> = ({ icon, label, isActive, onClick }) => (
+const TabButton = ({ icon, label, isActive, onClick }) => (
     <button
         onClick={onClick}
         role="tab"

@@ -1,18 +1,14 @@
-import type { ProcessedResult } from '../types';
 
 const VAR_NAMES = 'pqrstuvw'.split('');
-
-// Represents a group of minterms (an implicant) and its corresponding boolean term.
-type Implicant = { minterms: number[]; term: string[] };
 
 /**
  * Generates all possible implicants (potential K-map groups) for a given number of variables.
  * It works by creating every possible "sub-cube" in the boolean hypercube.
- * @param numVars - The number of variables (2, 3, or 4).
- * @returns An array of all possible implicants, sorted from largest group to smallest.
+ * @param {number} numVars - The number of variables (2, 3, or 4).
+ * @returns {Array<object>} An array of all possible implicants, sorted from largest group to smallest.
  */
-const generateImplicants = (numVars: number): Implicant[] => {
-    const implicants: Implicant[] = [];
+const generateImplicants = (numVars) => {
+    const implicants = [];
     const numMinterms = 1 << numVars;
 
     // A term is defined by which variables are fixed, and to what value.
@@ -21,7 +17,7 @@ const generateImplicants = (numVars: number): Implicant[] => {
         for (let value = 0; value < numMinterms; value++) {
             if ((mask & value) !== value) continue; // Inconsistent state, skip
 
-            const term: string[] = [];
+            const term = [];
             for (let i = 0; i < numVars; i++) {
                 const bitMask = 1 << (numVars - 1 - i);
                 if (mask & bitMask) { // This variable is fixed in the term
@@ -30,10 +26,9 @@ const generateImplicants = (numVars: number): Implicant[] => {
                 }
             }
             
-            // Don't generate the empty term that covers everything unless it's for the '1' case
             if (term.length === 0 && numMinterms > 1) continue;
 
-            const minterms: number[] = [];
+            const minterms = [];
             const floatingBitsCount = numVars - term.length;
             for (let i = 0; i < (1 << floatingBitsCount); i++) {
                 let currentMinterm = value;
@@ -53,7 +48,6 @@ const generateImplicants = (numVars: number): Implicant[] => {
         }
     }
     
-    // Add the "1" case (all minterms)
     implicants.push({
         minterms: Array.from({length: numMinterms}, (_, i) => i),
         term: []
@@ -63,16 +57,15 @@ const generateImplicants = (numVars: number): Implicant[] => {
     return uniqueImplicants.sort((a, b) => b.minterms.length - a.minterms.length);
 };
 
-// Memoize implicant generation for performance
-const IMPLICANTS_CACHE: { [key: number]: Implicant[] } = {};
-const getImplicantsFor = (numVars: number) => {
+const IMPLICANTS_CACHE = {};
+const getImplicantsFor = (numVars) => {
     if (!IMPLICANTS_CACHE[numVars]) {
         IMPLICANTS_CACHE[numVars] = generateImplicants(numVars);
     }
     return IMPLICANTS_CACHE[numVars];
 };
 
-export const solveFromOutputs = (numVariables: number, outputs: (0 | 1)[]): ProcessedResult => {
+export const solveFromOutputs = (numVariables, outputs) => {
   const variables = VAR_NAMES.slice(0, numVariables);
   const minterms = outputs
     .map((out, i) => (out === 1 ? i : -1))
@@ -98,14 +91,12 @@ export const solveFromOutputs = (numVariables: number, outputs: (0 | 1)[]): Proc
       };
   }
 
-  // 1. Find all valid implicants for the given function
   const allPossibleImplicants = getImplicantsFor(numVariables);
   const validImplicants = allPossibleImplicants.filter(imp => 
     imp.minterms.length > 0 && imp.minterms.every(m => mintermSet.has(m))
   );
 
-  // 2. Find the prime implicants from the valid ones (Quine-McCluskey Step 1)
-  const primeImplicants: Implicant[] = [];
+  const primeImplicants = [];
   for (const implicantA of validImplicants) {
       let isSubsumed = false;
       for (const implicantB of validImplicants) {
@@ -123,12 +114,11 @@ export const solveFromOutputs = (numVariables: number, outputs: (0 | 1)[]): Proc
   }
   const uniquePrimeImplicants = Array.from(new Map(primeImplicants.map(item => [JSON.stringify(item.minterms), item])).values());
 
-  // 3. Use a greedy covering algorithm to select a minimal set of PIs
-  const finalTerms: Implicant[] = [];
+  const finalTerms = [];
   let uncoveredMinterms = new Set(minterms);
 
   while (uncoveredMinterms.size > 0) {
-      let bestImplicant: Implicant | null = null;
+      let bestImplicant = null;
       let maxCovered = 0;
 
       for (const implicant of uniquePrimeImplicants) {
@@ -143,7 +133,6 @@ export const solveFromOutputs = (numVariables: number, outputs: (0 | 1)[]): Proc
           finalTerms.push(bestImplicant);
           bestImplicant.minterms.forEach(m => uncoveredMinterms.delete(m));
       } else {
-          // Should not happen if logic is correct, but as a safeguard
           break; 
       }
   }

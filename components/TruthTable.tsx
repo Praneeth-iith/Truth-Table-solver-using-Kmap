@@ -1,20 +1,14 @@
 import React, { useMemo } from 'react';
 
-interface TruthTableProps {
-  numVariables: number;
-  outputs: (0 | 1)[];
-  onOutputChange: (index: number, value: 0 | 1) => void;
-}
-
-export const TruthTable: React.FC<TruthTableProps> = ({ numVariables, outputs, onOutputChange }) => {
+export const TruthTable = ({ numVariables, outputs, onOutputChange }) => {
   const { headers, rows } = useMemo(() => {
     const variables = 'pqrstuvw'.slice(0, numVariables).split('');
     const headers = [...variables, 'Output'];
     const numRows = 2 ** numVariables;
-    const rows: (boolean[])[] = [];
+    const rows = [];
 
     for (let i = 0; i < numRows; i++) {
-      const row: boolean[] = [];
+      const row = [];
       for (let j = 0; j < numVariables; j++) {
         row.push(((i >> (numVariables - 1 - j)) & 1) === 1);
       }

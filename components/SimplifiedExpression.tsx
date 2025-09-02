@@ -1,11 +1,6 @@
 import React from 'react';
-import type { ProcessedResult } from '../types';
 
-interface SimplifiedExpressionProps {
-  result: ProcessedResult | null;
-}
-
-export const SimplifiedExpression: React.FC<SimplifiedExpressionProps> = ({ result }) => {
+export const SimplifiedExpression = ({ result }) => {
   const renderExpression = () => {
     if (!result) {
       return <span className="text-slate-500">...</span>;
